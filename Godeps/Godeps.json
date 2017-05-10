@@ -1,0 +1,6 @@
+{
+	"ImportPath": "github.com/7kfpun/stream-server",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
+	"Deps": []
+}
