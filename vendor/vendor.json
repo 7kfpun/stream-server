@@ -1,0 +1,13 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "vnAQyneHaNrh+aOqACLEXM8wbgw=",
+			"path": "github.com/nubunto/tts",
+			"revision": "d183cb25a053a2c0a45d4711ff89923efc856348",
+			"revisionTime": "2016-07-18T19:32:39Z"
+		}
+	],
+	"rootPath": "github.com/7kfpun/stream-server"
+}
