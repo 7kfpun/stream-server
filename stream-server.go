@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -14,9 +13,7 @@ import (
 	"github.com/nubunto/tts"
 )
 
-var (
-	chars        = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-)
+var chars = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
 
 func generateSessionID() string {
 	id := make([]rune, 6)
@@ -26,11 +23,11 @@ func generateSessionID() string {
 	return string(id)
 }
 
-func speechText(text string) string {
-	log.Printf("Start speech" + text)
+func speechText(text string, lang string) string {
+	log.Printf("INFO: Speech text: " + text)
 	s, err := tts.Speak(tts.Config{
 		Speak:    text,
-		Language: "zh-HK",
+		Language: lang,
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -38,7 +35,7 @@ func speechText(text string) string {
 
 	now := time.Now()
 	filename := now.Format("2006-01-02_") + generateSessionID() + ".mp3"
-	err = ioutil.WriteFile(filename, s.Bytes(), os.ModePerm)
+	err = ioutil.WriteFile("output/" + filename, s.Bytes(), os.ModePerm)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,11 +44,11 @@ func speechText(text string) string {
 }
 
 func main() {
-	fmt.Println("Starting http stream server")
+	log.Printf("INFO: Starting http stream server")
 	http.HandleFunc("/", HandleClient)
 	err := http.ListenAndServe(GetPort(), nil)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 }
 
@@ -62,27 +59,31 @@ func GetPort() string {
 		port = "4747"
 		log.Printf("INFO: No PORT environment variable detected, defaulting to " + port)
 	}
+
 	return ":" + port
 }
 
 func HandleClient(writer http.ResponseWriter, request *http.Request) {
-	// First of check if Get is set in the URL
 	text := request.URL.Query().Get("text")
 	if text == "" {
-		// Get not set, send a 400 bad request
 		defaultMusic(writer, request)
 		return
 	}
 
+	lang := request.URL.Query().Get("lang")
+	if lang  == "" {
+		lang = "en"
+	}
+
 	c := make(chan string)
 	go func() {
-		c <- speechText(text)
+		c <- speechText(text, lang)
 	}()
 
 	var result string
-	result = <- c
-	Openfile, err := os.Open(result)
-	defer Openfile.Close()  // Close after function return
+	result = <-c
+	Openfile, err := os.Open("output/" + result)
+	defer Openfile.Close() // Close after function return
 	if err != nil {
 		http.Error(writer, "File not found.", 404)
 		return
@@ -115,11 +116,10 @@ func HandleClient(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
-
-func defaultMusic (writer http.ResponseWriter, request *http.Request) {
+func defaultMusic(writer http.ResponseWriter, request *http.Request) {
 	// Check if file exists and open
 	Openfile, err := os.Open("iloveyou.mp3")
-	defer Openfile.Close()  // Close after function return
+	defer Openfile.Close() // Close after function return
 	if err != nil {
 		http.Error(writer, "File not found.", 404)
 		return
@@ -153,7 +153,7 @@ func defaultMusic (writer http.ResponseWriter, request *http.Request) {
 			return
 		}
 
-		fmt.Println("Finish once")
+		log.Printf("INFO: Finish once")
 	}
 
 	return
